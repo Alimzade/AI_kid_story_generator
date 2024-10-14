@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story and Evaluation</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .story-container, .evaluation-container {
+            width: 48%;
+        }
+
+        .story-container h1, .evaluation-container h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #0056b3;
+            border-bottom: 2px solid #e2e2e2;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        ul li {
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            font-size: 18px;
+        }
+
+        .indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .indicator.green {
+            background-color: green;
+        }
+
+        .indicator.red {
+            background-color: red;
+        }
+
+        .readability-bar {
+            width: 100%;
+            height: 20px;
+            border-radius: 10px;
+            background: linear-gradient(to right, red, yellow, green);
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .readability-indicator {
+            position: absolute;
+            top: -5px;
+            height: 30px;
+            width: 3px;
+            background-color: black;
+        }
+
+        p {
+            font-size: 18px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .harmful-content-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .harmful-content-box.safe {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .harmful-content-box.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: white;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Story Container -->
+        <div class="story-container">
+            <h1>Generated Story</h1>
+            <p>{{ evaluations.story }}</p>
+        </div>
+
+        <!-- Evaluation Container -->
+        <div class="evaluation-container">
+            <h1>Story Evaluation</h1>
+            
+            <!-- Options Evaluation -->
+            <h2>Options Evaluation</h2>
+            <ul>
+                {% for key, value in evaluations.options_evaluation.options_evaluations[1].items() %}
+                <li><span class="indicator {% if value %}green{% else %}red{% endif %}"></span>{{ key }}: {{ '✔️' if value else '❌' }}</li>
+                {% endfor %}
+            </ul>
+            
+            <!-- Length Evaluation -->
+            <h2>Length Evaluation</h2>
+            {% if evaluations and evaluations.length_evaluation %}
+                <p><span class="indicator {% if evaluations.length_evaluation.length_evaluation[0] %}green{% else %}red{% endif %}"></span>{{ 'Pass' if evaluations.length_evaluation.length_evaluation[0] else 'Fail' }} - Word Count: {{ evaluations.length_evaluation.length_evaluation[1] }}</p>
+            {% else %}
+                <p>No length evaluation available.</p>
+            {% endif %}
+            
+            <!-- Readability Evaluation -->
+            <h2>Readability Evaluation</h2>
+            <div class="readability-bar">
+                <div class="readability-indicator" style="left: calc({{ evaluations.readability_evaluation.readability_evaluation.flesch_score }}% - 0px);"></div>
+            </div>
+            <p><span class="indicator {% if evaluations.readability_evaluation.readability_evaluation.appropriate_for_age_group == 'Yes' %}green{% else %}red{% endif %}"></span>Flesch Score: {{ evaluations.readability_evaluation.readability_evaluation.flesch_score }}</p>
+            <p>Flesch Grade: {{ evaluations.readability_evaluation.readability_evaluation.flesch_grade }}</p>
+
+            <!-- Harmful Content Evaluation -->
+            <h2>Harmful Content Evaluation</h2>
+            <div class="harmful-content-box {% if evaluations.harmful_content_evaluation.evaluation == 'No harmful content' %}safe{% else %}danger{% endif %}">
+                <strong>Status:</strong> {{ evaluations.harmful_content_evaluation.evaluation }}<br>
+                {% if evaluations.harmful_content_evaluation.evaluation == 'Harmful content found' %}
+                <strong>Details:</strong> {{ evaluations.harmful_content_evaluation.content }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/home">Back to Home</a>
+    </div>
+</body>
+</html>

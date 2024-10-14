@@ -1,0 +1,26 @@
+stages:
+  - test
+
+variables:
+  API_URL: "https://fake-api-url.com"
+  API_KEY: "dummy_api_key"
+  
+test:
+  stage: test
+  image: python:3.9
+  script:
+    - echo "Installing dependencies..."
+    - pip install -r requirements.txt
+
+    - echo "Running tests with coverage..."
+    - python -m coverage run --source=. -m pytest tests/
+    - python -m coverage report
+    - python -m coverage xml
+
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml

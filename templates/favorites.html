@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorites</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #007bff;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        .favorites-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .favorite-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, max-height 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .favorite-card:hover {
+            background: #f9f9f9;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .favorite-card h2 {
+            font-size: 22px;
+            margin: 0 0 10px;
+            color: #007bff;
+        }
+
+        .favorite-card .summary,
+        .favorite-card .full-story {
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .favorite-card .full-story {
+            max-height: 0;
+            opacity: 0;
+            display: none;
+        }
+
+        .favorite-card.expanded .summary {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .favorite-card.expanded .full-story {
+            max-height: 1000px;
+            opacity: 1;
+            display: block;
+        }
+
+        .favorite-card .favorite-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: #007bff;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .favorite-card .favorite-icon.filled {
+            color: #ff0000;
+        }
+
+        .favorite-card .favorite-icon.outlined {
+            color: #ccc;
+        }
+
+        .no-favorites {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Favorite Stories</h1>
+        <div class="favorites-list">
+            {% if favorites %}
+                {% for favorite in favorites[::-1] %}
+                    <div class="favorite-card" data-story-id="{{ favorite.id }}">
+                        <i class="favorite-icon fas fa-heart filled" title="Remove from favorites"></i>
+                        <h2>{{ favorite.story_content | truncate(100, True) }}</h2>
+                        <div class="summary">
+                            <p><b>Summary:</b> {{ favorite.summary_text }}</p>
+                        </div>
+                        <div class="full-story">
+                            <p>{{ favorite.story_content }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-favorites">You have no favorite stories yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- JavaScript to handle expanding, collapsing, and removing stories -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const favoriteCards = document.querySelectorAll('.favorite-card');
+
+            favoriteCards.forEach(card => {
+                // Expand and collapse story
+                card.addEventListener('click', () => {
+                    card.classList.toggle('expanded');
+                });
+
+                // Favorite icon logic
+                const heartIcon = card.querySelector('.favorite-icon');
+                heartIcon.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent triggering the card expansion
+
+                    const storyText = card.querySelector('.full-story p').textContent; // Use story content
+
+                    fetch('/remove-favorite', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ storyText: storyText }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message === 'Favorite removed') {
+                            card.remove(); // Remove the card from the DOM
+                        } else {
+                            alert('Error removing favorite.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+                    // Toggle icon class
+                    heartIcon.classList.toggle('filled');
+                    heartIcon.classList.toggle('outlined');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

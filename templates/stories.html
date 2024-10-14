@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Stories</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #007bff;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        .stories-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .story-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, max-height 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .story-card:hover {
+            background: #f9f9f9;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .story-card h2 {
+            font-size: 22px;
+            margin: 0 0 10px;
+            color: #007bff;
+        }
+
+        .story-card .full-story {
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .story-card.expanded .full-story {
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .story-card .favorite-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: #007bff;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .story-card .favorite-icon.filled {
+            color: #ff0000;
+        }
+
+        .story-card .favorite-icon.outlined {
+            color: #ccc;
+        }
+
+        .no-stories {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Past Stories</h1>
+        <div class="stories-list">
+            {% if stories %}
+                {% for story in stories[::-1] %}
+                    <div class="story-card" data-story-id="{{ story.id }}">
+                        <i class="favorite-icon fas fa-heart outlined"></i>
+                        <h2>{{ story.content | truncate(150, True) }}</h2>
+                        <div class="full-story">
+                            <p>{{ story.content }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-stories">You have no past stories yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- JavaScript to handle interactions -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const favoriteIcons = document.querySelectorAll('.favorite-icon');
+
+            favoriteIcons.forEach(icon => {
+                const storyId = icon.getAttribute('data-story-id');
+
+                icon.addEventListener('click', () => {
+                    const currentStatus = localStorage.getItem(`story_${storyId}_favorited`) === 'true';
+                    const newStatus = !currentStatus;
+
+                    // Update local storage
+                    localStorage.setItem(`story_${storyId}_favorited`, newStatus);
+                    updateIcon(icon, newStatus);
+
+                    // Send the story ID and favorite status to the server
+                    fetch(newStatus ? '/save-favorite' : '/remove-favorite', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ storyId: storyId, isFavorited: newStatus }),
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log('Favorite status updated:', data))
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+
+            function updateIcon(icon, filled) {
+                // Toggle icon classes based on the filled status
+                icon.classList.toggle('fas', filled);
+                icon.classList.toggle('far', !filled);
+                icon.classList.toggle('filled', filled);
+                icon.classList.toggle('outlined', !filled);
+            }
+        });
+    </script>
+</body>
+</html>
