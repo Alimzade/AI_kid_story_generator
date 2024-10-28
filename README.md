@@ -1,4 +1,4 @@
-# Kids' Story Generator Web Application #
+# Kids' Story Generator Web App #
 
 ## Overview
 
